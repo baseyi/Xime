@@ -101,6 +101,7 @@ data class KeyboardUiState(
     val quickSendEditingItemText: String = "",
     val quickSendEditingItemCode: String = "",
     val promptVisible: Boolean = false,
+    val promptFloating: Boolean = false,
     val promptExpanded: Boolean = false,
     val promptCanSend: Boolean = false,
     val toolPanelVisible: Boolean = false,

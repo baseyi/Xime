@@ -615,7 +615,7 @@ interface XimeAsr {
   emitPartial(text: string): void;
   emitError(message: string): void;
   /** 1=LISTENING 2=PROCESSING 3=ERROR 0=IDLE */
-  emitState(state: 0 | 1 | 2 | 3): void;
+  emitState(state: 0 | 1 | 2 | 3 | 4): void;
 }
 
 interface XimeQuickSendItem {

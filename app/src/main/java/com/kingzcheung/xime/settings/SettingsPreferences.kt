@@ -111,12 +111,17 @@ object SettingsPreferences {
     fun getToolbarButtons(context: Context): List<String> {
         val prefs = getPrefs(context)
         val raw = prefs.getString(KEY_TOOLBAR_BUTTONS, DEFAULT_TOOLBAR_BUTTONS) ?: DEFAULT_TOOLBAR_BUTTONS
-        val buttons = raw.split(",").filter { it.isNotEmpty() }
+        var buttons = raw.split(",").filter { it.isNotEmpty() }
         if (!prefs.getBoolean("prompt_toolbar_added", false)) {
             val updated = (buttons + "prompt").distinct()
             prefs.edit().putString(KEY_TOOLBAR_BUTTONS, updated.joinToString(","))
                 .putBoolean("prompt_toolbar_added", true).apply()
-            return updated
+            buttons = updated
+        }
+        if (!prefs.getBoolean("switch_keyboard_toolbar_added", false)) {
+            buttons = (buttons + "switch_keyboard").distinct()
+            prefs.edit().putString(KEY_TOOLBAR_BUTTONS, buttons.joinToString(","))
+                .putBoolean("switch_keyboard_toolbar_added", true).apply()
         }
         return buttons
     }

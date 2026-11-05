@@ -1,0 +1,12 @@
+{
+  "id": "com.kingzcheung.xime.plugin.local_qwen_asr",
+  "name": "本地千问实时语音",
+  "description": "连接 Mac mlx-qwen3-asr WebSocket 服务，支持可选文本纠错。",
+  "version": "1.0.4",
+  "type": "speech",
+  "entry": "main.js",
+  "platforms": ["android"],
+  "minHostVersion": "3.5.0",
+  "network": {"allowCustomHosts": true},
+  "capabilities": {"speech": {"inputMode": "streaming", "supportsPartialResults": true}}
+}

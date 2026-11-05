@@ -1154,7 +1154,17 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
         }
 
         // T9：跳过 service.rimeEngine.commit()，用用户点选的 selectedCandidate 作为权威上屏文本。
-        val committedText = if (isT9) "" else service.rimeEngine.commit()
+        var committedText = if (isT9) "" else service.rimeEngine.commit()
+        if (!isT9 && committedText.isEmpty() && !service.uiState.value.isAsciiMode) {
+            val composition = service.rimeEngine.getComposition()
+            val confirmed = confirmedPrefixWithoutUnmatchedTail(
+                composition.preedit, selectedCandidate, composition.candidates.map { it.text },
+            )
+            if (confirmed != null) {
+                service.rimeEngine.clearComposition()
+                committedText = confirmed
+            }
+        }
         // T9 模式下 fullyConsumed 是判断 full/partial commit 的唯一权威：
         // 当控制器明确 partial commit 时，即使 RIME commit() 返回非空文本
         // （RIME 内部做了 partial commit），也不应走 full commit 路径。

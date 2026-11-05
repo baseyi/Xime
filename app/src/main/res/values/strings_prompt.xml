@@ -7,4 +7,7 @@
     <string name="prompt_send_unavailable">全文已填入，请在应用中点击发送</string>
     <string name="prompt_expand">向上展开</string>
     <string name="prompt_shrink">缩小</string>
+    <string name="prompt_copy">拷贝</string>
+    <string name="prompt_copy_failed">拷贝失败，草稿已保留</string>
+    <string name="voice_correcting">正在纠错…</string>
 </resources>

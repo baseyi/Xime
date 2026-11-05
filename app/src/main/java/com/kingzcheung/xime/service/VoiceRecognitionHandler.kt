@@ -283,7 +283,9 @@ class VoiceRecognitionHandler(
             speechRecognitionManager.stopRecognition()
             return
         }
-        if (lastPartialText.isEmpty()) {
+        val localStreaming = !SettingsPreferences.isSttUseLocal(context) &&
+            SettingsPreferences.getSttOnlinePluginId(context) == "com.kingzcheung.xime.plugin.local_qwen_asr"
+        if (lastPartialText.isEmpty() && !localStreaming) {
             // 无已识别文本（没说话/极短语音）：无内容可等，直接结束；
             // 迟到的最终结果仍走正常提交路径（说了话就该上屏）
             speechRecognitionManager.stopRecognition()
@@ -295,7 +297,7 @@ class VoiceRecognitionHandler(
         // handleSpeechStateChange 过滤，直到最终结果/超时才结束
         onStateChanged(getState().copy(voiceRecognitionState = RecognitionState.PROCESSING))
         mainHandler.removeCallbacks(finishTimeoutRunnable)
-        mainHandler.postDelayed(finishTimeoutRunnable, FINISH_TIMEOUT_MS)
+        mainHandler.postDelayed(finishTimeoutRunnable, if (localStreaming) 30000L else FINISH_TIMEOUT_MS)
         speechRecognitionManager.stopRecognition()
     }
 

@@ -2201,11 +2201,26 @@ private fun SpaceKey(
             }
         } else Modifier
     }
+    var visuallyPressed by remember { mutableStateOf(false) }
     val keyFontFamily = AppFonts.keyFontFamily
 
     Box(
         modifier = modifier
             .fillMaxHeight()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                    visuallyPressed = true
+                    try {
+                        do {
+                            val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                            val pressed = event.changes.any { it.id == down.id && it.pressed }
+                        } while (pressed)
+                    } finally {
+                        visuallyPressed = false
+                    }
+                }
+            }
             .pointerInput(isSttEnabled, voiceSticky, currentLongPressItems == null) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
@@ -2342,7 +2357,7 @@ private fun SpaceKey(
             .fillMaxHeight()
             .then(shadowModifier)
             .clip(RoundedCornerShape(LocalKeyCornerRadius.current))
-            .background(keyBackgroundColor)
+            .background(if (visuallyPressed) keyBackgroundColor.copy(red = keyBackgroundColor.red * 0.85f, green = keyBackgroundColor.green * 0.85f, blue = keyBackgroundColor.blue * 0.85f) else keyBackgroundColor)
             .keySemantics(
                 when {
                     voiceSticky -> tr(R.string.s_qingchujieshuyuyin)

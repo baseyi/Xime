@@ -72,6 +72,7 @@ data class InputUIState(
     val quickSendEditingItemCode: String = "",
     /** 通用工具面板是否显示（候选栏上方，与快捷发送同位置）。 */
     val promptVisible: Boolean = false,
+    val promptFloating: Boolean = false,
     val promptExpanded: Boolean = false,
     val promptCanSend: Boolean = false,
     val toolPanelVisible: Boolean = false,

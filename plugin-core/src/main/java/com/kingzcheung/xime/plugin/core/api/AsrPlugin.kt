@@ -8,7 +8,8 @@ enum class AsrPluginState {
     IDLE,
     LISTENING,
     PROCESSING,
-    ERROR
+    ERROR,
+    CORRECTING
 }
 
 /**

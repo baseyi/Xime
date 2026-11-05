@@ -284,10 +284,11 @@ private fun PanelKeyCell(id: String, env: QwertyRowEnv, modifier: Modifier = Mod
     }
     val binding = KeysConfigHelper.getGestureFor(env.section, id, env.isAsciiMode)
     val tap = binding?.tap
-    val commit = tap?.value?.takeIf { it.isNotEmpty() } ?: id
+    val rawCommit = tap?.value?.takeIf { it.isNotEmpty() } ?: id
+    val commit = if (env.section == "common_symbols") englishPanelSymbol(rawCommit) else rawCommit
     KeyButton(
         text = commit,
-        onClick = { dispatchKeyActionOrPress(tap, commit, env.onKeyPress, env.onCommitText, env.onGestureAction) },
+        onClick = { dispatchKeyActionOrPress(if (commit == rawCommit) tap else null, commit, env.onKeyPress, env.onCommitText, env.onGestureAction) },
         backgroundColor = env.keyBackgroundColor,
         textColor = env.keyTextColor,
         modifier = modifier,
@@ -546,4 +547,12 @@ private fun OperatorPillarKey(
             fontFamily = AppFonts.keyFontFamily,
         )
     }
+}
+
+internal fun englishPanelSymbol(value: String): String = when (value) {
+    "“", "”" -> "\""
+    "‘", "’" -> "'"
+    else -> value.map { char ->
+        if (char in '\uFF01'..'\uFF5E') (char.code - 0xFEE0).toChar() else char
+    }.joinToString("")
 }

@@ -1575,7 +1575,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                         hasControls = !state.toolPanelUiNodes.isNullOrEmpty(),
                     )
                 } else 0
-                val promptExtra = if (state.promptVisible && !isOverlayPage)
+                val promptExtra = if (state.promptVisible && !state.promptFloating && !isOverlayPage)
                     com.kingzcheung.xime.ui.keyboard.promptPanelHeightDp(resources.configuration.screenHeightDp, state.promptExpanded) else 0
                 val overlayPanelExtra = quickSendFormExtra + toolPanelExtra + promptExtra
 
@@ -1773,6 +1773,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                     quickSendEditingItemCode = state.quickSendEditingItemCode,
                                     promptVisible = state.promptVisible,
                                     promptExpanded = state.promptExpanded,
+                                    promptFloating = state.promptFloating,
                                     promptCanSend = state.promptCanSend,
                                     toolPanelVisible = state.toolPanelVisible,
                                     toolPanelInputFocused = state.toolPanelInputFocused,

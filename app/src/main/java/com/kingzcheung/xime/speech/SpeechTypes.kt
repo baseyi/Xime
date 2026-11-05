@@ -4,7 +4,8 @@ enum class RecognitionState {
     IDLE,
     LISTENING,
     PROCESSING,
-    ERROR
+    ERROR,
+    CORRECTING
 }
 
 data class AudioConfig(

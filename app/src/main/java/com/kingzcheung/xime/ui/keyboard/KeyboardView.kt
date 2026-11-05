@@ -411,11 +411,14 @@ fun KeyboardView(
                 PromptEditorPanel(
                     canSend = state.promptCanSend,
                     expanded = state.promptExpanded,
+                    floating = state.promptFloating,
+                    onToggleFloating = { callbacks.onPromptToggleFloating?.invoke() },
                     onToggleExpanded = { callbacks.onPromptToggleExpanded?.invoke() },
                     onClose = { callbacks.onPromptClose?.invoke() },
                     onSubmit = { callbacks.onPromptSubmit?.invoke(it) },
                     onAttach = { callbacks.onPromptAttach?.invoke(it) },
                     onClear = { callbacks.onPromptClear?.invoke() },
+                    onCopy = { callbacks.onPromptCopy?.invoke() },
                 )
             }
 
@@ -475,6 +478,7 @@ fun KeyboardView(
                     }
                     val onClick: () -> Unit = when (item) {
                         is ToolbarButtonItem.Builtin -> when (item.button) {
+                            ToolbarButton.SWITCH_KEYBOARD -> ({ callbacks.onPreviousKeyboard?.invoke() })
                             ToolbarButton.PROMPT -> ({ callbacks.onPromptOpen?.invoke() })
                             ToolbarButton.EMOJI -> ({ viewModel.showOverlay(OverlayRoute.Emoji) })
                             ToolbarButton.CLIPBOARD -> ({ viewModel.showOverlay(OverlayRoute.Clipboard(0)) })

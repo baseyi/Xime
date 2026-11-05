@@ -42,6 +42,7 @@ data class KeyboardCallbacks(
     val onSwitchSchema: ((String) -> Unit)? = null,
     val onToggleSchemaSwitch: ((SchemaSwitchUiState) -> Unit)? = null,
     val onHideKeyboard: (() -> Unit)? = null,
+    val onPreviousKeyboard: (() -> Unit)? = null,
     val onSwitchKeyboard: (() -> Unit)? = null,
     val onToolbarEditingAction: ((String) -> Unit)? = null,
     val onCommitImage: ((String) -> Unit)? = null,
@@ -60,11 +61,13 @@ data class KeyboardCallbacks(
     /**
      * 通用工具面板关闭。
      */
+    val onPromptToggleFloating: (() -> Unit)? = null,
     val onPromptToggleExpanded: (() -> Unit)? = null,
     val onPromptOpen: (() -> Unit)? = null,
     val onPromptClose: (() -> Unit)? = null,
     val onPromptSubmit: ((Boolean) -> Unit)? = null,
     val onPromptAttach: ((android.widget.EditText?) -> Unit)? = null,
+    val onPromptCopy: (() -> Unit)? = null,
     val onPromptClear: (() -> Unit)? = null,
     val onToolPanelClose: (() -> Unit)? = null,
     /**

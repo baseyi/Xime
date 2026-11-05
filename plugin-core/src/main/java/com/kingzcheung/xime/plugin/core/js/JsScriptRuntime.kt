@@ -954,6 +954,7 @@ class JsScriptRuntime(
                 when ((args.getOrNull(0) as? Number)?.toInt()) {
                     1 -> com.kingzcheung.xime.plugin.core.api.AsrPluginState.LISTENING
                     2 -> com.kingzcheung.xime.plugin.core.api.AsrPluginState.PROCESSING
+                    4 -> com.kingzcheung.xime.plugin.core.api.AsrPluginState.CORRECTING
                     3 -> com.kingzcheung.xime.plugin.core.api.AsrPluginState.ERROR
                     else -> com.kingzcheung.xime.plugin.core.api.AsrPluginState.IDLE
                 }

@@ -52,6 +52,7 @@ internal class PromptEditorController(private val service: XimeInputMethodServic
         service.uiState.value = service.uiState.value.copy(
             promptVisible = true,
             promptExpanded = false,
+            promptFloating = false,
             promptCanSend = promptCanSend(service.currentInputEditorInfo?.imeOptions ?: 0),
             showQuickSendForm = false,
             quickSendFormFocused = false,
@@ -212,7 +213,9 @@ internal class PromptEditorController(private val service: XimeInputMethodServic
         }
     }
 
-    fun submit(send: Boolean) {
+    fun copyToClipboard() = submit(send = false, copy = true)
+
+    fun submit(send: Boolean, copy: Boolean = false) {
         if (!service.uiState.value.promptVisible || submitting) return
         finishVoiceInput()
         submitting = true
@@ -226,6 +229,16 @@ internal class PromptEditorController(private val service: XimeInputMethodServic
                 submitting = false
                 val text = editText?.text?.toString() ?: draft
                 if (text.isBlank()) return@withContext
+                if (copy) {
+                    val success = runCatching {
+                        val clipboard = service.getSystemService(android.content.ClipboardManager::class.java)
+                            ?: error("Clipboard unavailable")
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Prompt", text))
+                    }.isSuccess
+                    if (success) clearAndClose()
+                    else Toast.makeText(service, tr(R.string.prompt_copy_failed), Toast.LENGTH_SHORT).show()
+                    return@withContext
+                }
                 val ic = service.currentInputConnection
                 if (ic == null || !runCatching { ic.commitText(text, 1) }.getOrDefault(false)) {
                     Toast.makeText(service, tr(R.string.prompt_submit_failed), Toast.LENGTH_SHORT).show()
@@ -237,9 +250,16 @@ internal class PromptEditorController(private val service: XimeInputMethodServic
                     val accepted = runCatching { ic.performEditorAction(EditorInfo.IME_ACTION_SEND) }.getOrDefault(false)
                     if (!accepted) Toast.makeText(service, tr(R.string.prompt_send_unavailable), Toast.LENGTH_LONG).show()
                 }
-                close()
+                clearAndClose()
             }
         }
     }
 
+    private fun clearAndClose() {
+        editText?.setText("")
+        draft = ""
+        selectionStart = 0
+        selectionEnd = 0
+        close()
+    }
 }

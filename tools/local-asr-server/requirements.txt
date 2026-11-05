@@ -1,0 +1,6 @@
+mlx-qwen3-asr[serve]>=0.4.1
+fastapi>=0.115
+uvicorn[standard]>=0.30
+numpy>=1.26
+python-multipart>=0.0.18
+python-dotenv>=1.0

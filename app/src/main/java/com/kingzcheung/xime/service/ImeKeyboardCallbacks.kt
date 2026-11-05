@@ -168,6 +168,17 @@ internal fun rememberImeKeyboardCallbacks(
             onSwitchSchema = { schemaId -> service.schemaController.switchSchema(schemaId) },
             onToggleSchemaSwitch = { sw -> service.sessionController.toggleSchemaSwitch(sw) },
             onHideKeyboard = { service.hideKeyboard() },
+            onPreviousKeyboard = {
+                val switched = try {
+                    service.switchToPreviousInputMethod()
+                } catch (_: RuntimeException) {
+                    false
+                }
+                if (!switched) {
+                    val imm = service.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.showInputMethodPicker()
+                }
+            },
             onSwitchKeyboard = {
                 val imm = service.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
                 @Suppress("DEPRECATION")
@@ -254,13 +265,20 @@ internal fun rememberImeKeyboardCallbacks(
                 service.uiState.value = service.uiState.value.copy(toolbarButtons = buttons)
             },
             onOpenToolPanel = { pluginId -> service.openToolPanel(pluginId) },
+            onPromptToggleFloating = {
+                service.uiState.value = service.uiState.value.copy(promptFloating = !service.uiState.value.promptFloating)
+            },
             onPromptToggleExpanded = {
                 service.uiState.value = service.uiState.value.copy(promptExpanded = !service.uiState.value.promptExpanded)
             },
-            onPromptOpen = { service.promptEditor.open() },
+            onPromptOpen = {
+                if (service.uiState.value.promptVisible) service.promptEditor.requestClose()
+                else service.promptEditor.open()
+            },
             onPromptClose = { service.promptEditor.requestClose() },
             onPromptSubmit = { send -> service.promptEditor.submit(send) },
             onPromptAttach = { service.promptEditor.attach(it) },
+            onPromptCopy = { service.promptEditor.copyToClipboard() },
             onPromptClear = { service.promptEditor.clear() },
             onToolPanelClose = { service.closeToolPanel() },
             onToolPanelItemClick = { item -> service.commitToolPanelItem(item.text) },

@@ -99,6 +99,7 @@ fun VoiceKeyboardLayout(
                 RecognitionState.IDLE -> tr(R.string.s_zhangankonggekaishishuohua)
                 RecognitionState.LISTENING -> tr(R.string.s_zhengzailingting)
                 RecognitionState.PROCESSING -> tr(R.string.s_zhengzaishibie)
+                RecognitionState.CORRECTING -> tr(R.string.voice_correcting)
                 RecognitionState.ERROR -> tr(R.string.s_shibiechucuo)
             }
             

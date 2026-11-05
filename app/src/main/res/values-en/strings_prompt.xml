@@ -7,4 +7,7 @@
     <string name="prompt_send_unavailable">Text inserted. Tap Send in the app.</string>
     <string name="prompt_expand">Expand</string>
     <string name="prompt_shrink">Shrink</string>
+    <string name="prompt_copy">Copy</string>
+    <string name="prompt_copy_failed">Copy failed. Draft retained.</string>
+    <string name="voice_correcting">Correcting…</string>
 </resources>

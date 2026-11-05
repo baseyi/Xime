@@ -73,6 +73,7 @@ class PluginAsrBackendAdapter(
         AsrPluginState.IDLE -> RecognitionState.IDLE
         AsrPluginState.LISTENING -> RecognitionState.LISTENING
         AsrPluginState.PROCESSING -> RecognitionState.PROCESSING
+        AsrPluginState.CORRECTING -> RecognitionState.CORRECTING
         AsrPluginState.ERROR -> RecognitionState.ERROR
     }
 }
