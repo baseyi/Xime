@@ -157,7 +157,7 @@ internal class ImeSessionController(private val service: XimeInputMethodService)
             }
         }
 
-        if (codeInInputBox && !service.uiState.value.toolPanelInputFocused) {
+        if (codeInInputBox && !service.uiState.value.toolPanelInputFocused && !service.uiState.value.promptVisible) {
             val ic = service.currentInputConnection
             if (isComposing && displayText.isNotEmpty()) {
                 showInputBoxComposition(ic, displayText, preeditCaretOffsetForInputBox(displayText))
@@ -325,7 +325,7 @@ internal class ImeSessionController(private val service: XimeInputMethodService)
             }
         }
 
-        if (SettingsPreferences.getInputTextLocation(service) == SettingsPreferences.INPUT_TEXT_INPUT_BOX) {
+        if (!service.uiState.value.promptVisible && SettingsPreferences.getInputTextLocation(service) == SettingsPreferences.INPUT_TEXT_INPUT_BOX) {
             val ic = service.currentInputConnection
             if (isComposing && displayText.isNotEmpty()) {
                 showInputBoxComposition(ic, displayText, preeditCaretOffsetForInputBox(displayText))

@@ -31,6 +31,7 @@ enum class ToolbarButton(
     val label: String,
     val icon: ImageVector
 ) {
+    PROMPT("prompt", "Prompt", Icons.Default.Create),
     EMOJI("emoji", tr(R.string.s_biaoqing), Icons.TwoTone.EmojiEmotions),
     CLIPBOARD("clipboard", tr(R.string.s_jiantieban), Icons.AutoMirrored.TwoTone.Assignment),
     SCHEMA("schema", tr(R.string.s_fanganxuanze), Icons.TwoTone.KeyboardAlt),

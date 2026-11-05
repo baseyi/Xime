@@ -93,6 +93,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
         // 空键无任何按键语义，且下游 Rime 路由按 key[0] 取码（key.lowercase()[0]），
         // 空串会越界崩溃（2026-09-14 真机实证：滑动手势 commit 值为空时触发）。
         if (key.isEmpty()) return
+        if (service.promptEditor.handleKey(key, isShifted)) return
         if (service.uiState.value.toolPanelInputFocused) {
             val candState = service.candidateState.value
             val hasComposing = candState.isComposing || candState.inputText.isNotEmpty()
@@ -286,7 +287,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                             // 直接上屏模式：英文编码已逐字落盘，"清输入态"需回删屏上对应字符；
                             // 校验光标前文本一致才删除并记录撤回，否则只清状态不动已上屏文本。
                             val removed = withContext(Dispatchers.Main) {
-                                val ic = service.currentInputConnection ?: return@withContext false
+                                val ic = service.editingInputConnection ?: return@withContext false
                                 val before = runCatching {
                                     ic.getTextBeforeCursor(pendingEnglish.length, 0)?.toString()
                                 }.getOrNull()
@@ -310,7 +311,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                         val codeInInputBox = SettingsPreferences.getInputTextLocation(service) ==
                             SettingsPreferences.INPUT_TEXT_INPUT_BOX
                         val inputFieldText = withContext(Dispatchers.Main) {
-                            service.currentInputConnection?.getTextBeforeCursor(XimeInputMethodService.SAFE_TEXT_LIMIT, 0)?.toString() ?: ""
+                            service.editingInputConnection?.getTextBeforeCursor(XimeInputMethodService.SAFE_TEXT_LIMIT, 0)?.toString() ?: ""
                         }
                         service.lastClearedText = when {
                             codeInInputBox -> inputFieldText + candState.pendingEnglishText
@@ -330,7 +331,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                             candidateActions = emptyList()
                         )
                         withContext(Dispatchers.Main) {
-                            service.currentInputConnection?.let {
+                            service.editingInputConnection?.let {
                                 service.endComposingInputBox()
                                 // 删除输入框中所有文字
                                 val textLen = inputFieldText.length
@@ -359,7 +360,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                             val anchorOk = text.isNotEmpty() && service.isUndoAnchorValid()
                             service.lastClearedText = ""
                             service.lastUndoAnchorText = null
-                            val ic = service.currentInputConnection
+                            val ic = service.editingInputConnection
                             if (anchorOk && ic != null) {
                                 // newCursorPosition=1：光标停在撤回内容末尾；
                                 // 传 text.length 会被 clamp 到整段文本末尾。
@@ -390,7 +391,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                                 action == EditorInfo.IME_ACTION_SEND ||
                                 action == EditorInfo.IME_ACTION_NEXT ||
                                 action == EditorInfo.IME_ACTION_DONE ->
-                                    service.currentInputConnection?.performEditorAction(action)
+                                    service.editingInputConnection?.performEditorAction(action)
                                 else -> service.sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
                             }
                         }
@@ -1395,7 +1396,7 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                 if (textToCommit.isNotEmpty()) {
                     service.calculatorEngine.clear()
                     service.serviceScope.launch(Dispatchers.Main) {
-                        val ic = service.currentInputConnection
+                        val ic = service.editingInputConnection
                         if (ic != null) {
                             // 删除表达式 + 提交结果：净光标位移 = 结果长度 - 表达式长度
                             service.noteSelfWriteCaretDelta(textToCommit.length - expression.length)

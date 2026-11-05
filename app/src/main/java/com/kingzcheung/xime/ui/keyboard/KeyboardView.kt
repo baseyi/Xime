@@ -407,6 +407,18 @@ fun KeyboardView(
                 )
             }
 
+            if (state.promptVisible) {
+                PromptEditorPanel(
+                    canSend = state.promptCanSend,
+                    expanded = state.promptExpanded,
+                    onToggleExpanded = { callbacks.onPromptToggleExpanded?.invoke() },
+                    onClose = { callbacks.onPromptClose?.invoke() },
+                    onSubmit = { callbacks.onPromptSubmit?.invoke(it) },
+                    onAttach = { callbacks.onPromptAttach?.invoke(it) },
+                    onClear = { callbacks.onPromptClear?.invoke() },
+                )
+            }
+
             // ACTIVE 输入面板在候选栏上方（需要 EditText 输入，保留候选栏可见）；
             // PASSIVE 纯展示面板走 Overlay 全屏（KeyboardView 底部 Overlay 分支渲染 InfoPanel）
             if (state.toolPanelVisible && state.toolPanelDisplay != "PASSIVE") {
@@ -463,6 +475,7 @@ fun KeyboardView(
                     }
                     val onClick: () -> Unit = when (item) {
                         is ToolbarButtonItem.Builtin -> when (item.button) {
+                            ToolbarButton.PROMPT -> ({ callbacks.onPromptOpen?.invoke() })
                             ToolbarButton.EMOJI -> ({ viewModel.showOverlay(OverlayRoute.Emoji) })
                             ToolbarButton.CLIPBOARD -> ({ viewModel.showOverlay(OverlayRoute.Clipboard(0)) })
                             ToolbarButton.SCHEMA -> ({ viewModel.showOverlay(OverlayRoute.SchemaList) })

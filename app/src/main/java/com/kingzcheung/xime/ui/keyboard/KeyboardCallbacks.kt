@@ -60,6 +60,12 @@ data class KeyboardCallbacks(
     /**
      * 通用工具面板关闭。
      */
+    val onPromptToggleExpanded: (() -> Unit)? = null,
+    val onPromptOpen: (() -> Unit)? = null,
+    val onPromptClose: (() -> Unit)? = null,
+    val onPromptSubmit: ((Boolean) -> Unit)? = null,
+    val onPromptAttach: ((android.widget.EditText?) -> Unit)? = null,
+    val onPromptClear: (() -> Unit)? = null,
     val onToolPanelClose: (() -> Unit)? = null,
     /**
      * 通用工具面板候选条目点击（AI 生成结果上屏，宿主处理选区替换/追加）。

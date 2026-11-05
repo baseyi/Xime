@@ -59,7 +59,7 @@ android {
 
         // NDK 配置
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            abiFilters += listOf("arm64-v8a")
         }
 
         // 构建信息
@@ -155,21 +155,13 @@ android {
         checkDependencies = true
     }
 
-    // 分架构打包
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
-        }
-    }
+
 }
 
 android.applicationVariants.all {
     val appName = "Xime"
     outputs.all {
-        val abi = filters.find { it.filterType.toString() == "ABI" }?.identifier ?: "universal"
+        val abi = filters.find { it.filterType.toString() == "ABI" }?.identifier ?: "arm64-v8a"
         (this as BaseVariantOutputImpl).outputFileName = "$appName-$versionName-$abi.apk"
     }
 }

@@ -455,7 +455,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         context = this,
         onStateChanged = { newState -> uiState.value = newState },
         getState = { uiState.value },
-        getInputConnection = { currentInputConnection },
+        getInputConnection = { editingInputConnection },
         onVoiceComplete = {
             val action = pendingVoiceAction
             pendingVoiceAction = null
@@ -469,7 +469,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         onSpectrumChanged = { spectrum ->
             voiceSpectrumState.value = spectrum
         },
-        onComposingWritten = { markInputBoxComposing() }
+        onComposingWritten = { if (!uiState.value.promptVisible) markInputBoxComposing() }
     )
 
     /**
@@ -1081,6 +1081,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
      * 记录选区、按优先级收集上下文预填、向插件取初始面板状态并渲染。
      */
     internal fun openToolPanel(pluginId: String) {
+        promptEditor.close()
         if (uiState.value.isFloatingMode ||
             resources.configuration.screenWidthDp > resources.configuration.screenHeightDp
         ) {
@@ -1574,7 +1575,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                         hasControls = !state.toolPanelUiNodes.isNullOrEmpty(),
                     )
                 } else 0
-                val overlayPanelExtra = quickSendFormExtra + toolPanelExtra
+                val promptExtra = if (state.promptVisible && !isOverlayPage)
+                    com.kingzcheung.xime.ui.keyboard.promptPanelHeightDp(resources.configuration.screenHeightDp, state.promptExpanded) else 0
+                val overlayPanelExtra = quickSendFormExtra + toolPanelExtra + promptExtra
 
                 // 键盘内容高度 = 期望值 ∩ 宿主承载区预算。
                 // 独立 IME 面板（如 Horizon OS 悬浮面板）只给键盘一段区域，而 configuration
@@ -1768,6 +1771,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                     quickSendEditingItemId = state.quickSendEditingItemId,
                                     quickSendEditingItemText = state.quickSendEditingItemText,
                                     quickSendEditingItemCode = state.quickSendEditingItemCode,
+                                    promptVisible = state.promptVisible,
+                                    promptExpanded = state.promptExpanded,
+                                    promptCanSend = state.promptCanSend,
                                     toolPanelVisible = state.toolPanelVisible,
                                     toolPanelInputFocused = state.toolPanelInputFocused,
                                     toolPanelPluginId = state.toolPanelPluginId,
@@ -2009,6 +2015,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     // ── ActionExecutor 实现 ──
 
     override fun performEditorMenuAction(actionId: Int) {
+        if (uiState.value.promptVisible) {
+            promptEditor.editText?.onTextContextMenuItem(actionId)
+            return
+        }
         when (actionId) {
             android.R.id.undo -> {
                 // performContextMenuAction 对 undo 支持不一致，改用 Ctrl+Z 键盘快捷键
@@ -2025,6 +2035,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && uiState.value.promptVisible) {
+            promptEditor.requestClose()
+            return true
+        }
         val e = event ?: return super.onKeyDown(keyCode, event)
         // 物理 Shift 单击切中英文的组合检测：Shift 按下重置标记，期间任何其他键按下即视为组合
         // （如 Shift+字母大写），抬起时不再触发切换。
@@ -2119,11 +2133,20 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun sendKeyEvent(keyCode: Int) {
+        if (uiState.value.promptVisible) {
+            promptEditor.sendKey(keyCode)
+            return
+        }
         currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
         currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
     }
 
     override fun moveCursor(direction: Int) {
+        if (uiState.value.promptVisible) {
+            val box = promptEditor.editText ?: return
+            box.setSelection((box.selectionStart + direction).coerceIn(0, box.length()))
+            return
+        }
         if (direction == 0) return
         if (candidateState.value.isComposing && !isT9Schema(uiState.value.currentSchemaId)) {
             // 组合态（仅全键盘）：移动编码编辑光标。光标由宿主维护、仅是插入/删除
@@ -2181,6 +2204,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun repeatLastInput() {
+        if (uiState.value.promptVisible) {
+            promptEditor.insert(predictionManager.lastCommittedText)
+            return
+        }
         val lastText = predictionManager.lastCommittedText
         if (lastText.isNotEmpty()) {
             currentInputConnection?.commitText(lastText, 1)
@@ -2200,6 +2227,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
+        promptEditor.close()
         super.onStartInput(attribute, restarting)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         loadDarkModePreference()
@@ -2682,7 +2710,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         else -> "UNKNOWN($value)"
     }
 
-    private fun updateEnterKeyText(editorInfo: EditorInfo) {
+    internal fun updateEnterKeyText(editorInfo: EditorInfo) {
         val imeOptions = editorInfo.imeOptions
         val action = imeOptions and EditorInfo.IME_MASK_ACTION
         val noEnterAction = imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0
@@ -2699,6 +2727,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onFinishInput() {
+        promptEditor.close()
         super.onFinishInput()
         inlineSuggestionManager?.clear()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
@@ -2709,6 +2738,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
     
     override fun onFinishInputView(finishingInput: Boolean) {
+        promptEditor.close()
         super.onFinishInputView(finishingInput)
         // 手写模型轻量，按"用键盘时加载、键盘收起即卸载"管理：输入会话结束
         // （收起键盘/焦点离开）即释放，:inference 侧同步卸载模型；未初始化时
@@ -2717,6 +2747,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onWindowHidden() {
+        promptEditor.close()
         super.onWindowHidden()
         clearInputState()
         recentClipboardItemsState.value = emptyList()
@@ -2844,6 +2875,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onDestroy() {
+        promptEditor.close()
         super.onDestroy()
         sharedPrefsListener?.let {
             SettingsPreferences.getPrefsPublic(this).unregisterOnSharedPreferenceChangeListener(it)
@@ -3019,6 +3051,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         }
     }
 
+    internal val promptEditor = PromptEditorController(this)
+    internal val editingInputConnection: android.view.inputmethod.InputConnection?
+        get() = if (uiState.value.promptVisible) promptEditor.inputConnection else currentInputConnection
+
     /** 插件下行事件投递器（input_changed / text_committed，敏感输入豁免）。 */
     internal val pluginEvents = PluginEventDispatcher(this)
 
@@ -3040,6 +3076,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     private fun commitTextAndPredict(text: String, isPaste: Boolean) {
+        if (uiState.value.promptVisible) {
+            promptEditor.insert(text)
+            return
+        }
         commitTextSilently(text, isPaste)
         if (isChineseMode) {
             mainHandler.post {
@@ -3082,6 +3122,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
      * 需在主线程调用。
      */
     internal fun commitTextSilently(text: String, isPaste: Boolean = false) {
+        if (uiState.value.promptVisible) {
+            promptEditor.insert(text)
+            return
+        }
         // 会话日志：上屏文本（用于把按键序列与其最终结果对齐）
         KeyTapLogger.recordCommit(text, isPaste)
         if (uiState.value.quickSendFormFocused) {
@@ -3157,6 +3201,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
      * 会话进行中重复调用为空操作——长按连删只在按下时快照一次。
      */
     internal fun beginDeleteSession() {
+        if (uiState.value.promptVisible) return
         // 会话快照读写 InputConnection 与 Compose 状态，必须在主线程（dispatchKey
         // 等入口可能来自后台线程，这里兜底切主线程）。
         if (Looper.myLooper() != Looper.getMainLooper()) {
@@ -3207,8 +3252,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
      */
     internal fun deleteBeforeCursor(count: Int) {
         val quickSendFocused = uiState.value.quickSendFormFocused
-        if (quickSendFocused || uiState.value.toolPanelInputFocused) {
+        if (quickSendFocused || uiState.value.toolPanelInputFocused || uiState.value.promptVisible) {
             val et = when {
+                uiState.value.promptVisible -> promptEditor.editText
                 quickSendFocused && uiState.value.quickSendCodeFocused ->
                     QuickSendFormCodeEditTextHolder.editText
                 quickSendFocused -> QuickSendFormEditTextHolder.editText
@@ -3233,8 +3279,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
      */
     internal fun replaceBeforeCursor(expected: String, replacement: String): Boolean {
         val quickSendFocused = uiState.value.quickSendFormFocused
-        if (quickSendFocused || uiState.value.toolPanelInputFocused) {
+        if (quickSendFocused || uiState.value.toolPanelInputFocused || uiState.value.promptVisible) {
             val et = when {
+                uiState.value.promptVisible -> promptEditor.editText
                 quickSendFocused && uiState.value.quickSendCodeFocused ->
                     QuickSendFormCodeEditTextHolder.editText
                 quickSendFocused -> QuickSendFormEditTextHolder.editText
@@ -3275,6 +3322,10 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     /** DEL 键回退一个字符，同属自身写入。 */
     override fun sendDownUpKeyEvents(keyEventCode: Int) {
+        if (uiState.value.promptVisible) {
+            promptEditor.sendKey(keyEventCode)
+            return
+        }
         if (keyEventCode == KeyEvent.KEYCODE_DEL) {
             selfWriteCaret.noteWrite(-1, android.os.SystemClock.uptimeMillis())
         }

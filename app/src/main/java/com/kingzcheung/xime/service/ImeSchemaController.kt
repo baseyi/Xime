@@ -132,7 +132,7 @@ internal class ImeSchemaController(private val service: XimeInputMethodService) 
     private var editSelAnchor = -1
 
     internal fun handleToolbarEditingAction(action: String) {
-        val ic = service.currentInputConnection ?: return
+        val ic = service.editingInputConnection ?: return
         when (action) {
             "select_all" -> ic.performContextMenuAction(android.R.id.selectAll)
             "copy" -> ic.performContextMenuAction(android.R.id.copy)

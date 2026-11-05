@@ -29,15 +29,15 @@ import kotlinx.coroutines.withContext
  */
 internal class ImeTextCommit(private val service: XimeInputMethodService) {
     internal fun performUndo() {
-        val currentTextBeforeCursor = service.currentInputConnection?.getTextBeforeCursor(1000, 0)?.toString() ?: ""
+        val currentTextBeforeCursor = service.editingInputConnection?.getTextBeforeCursor(1000, 0)?.toString() ?: ""
         val currentLength = currentTextBeforeCursor.length
         
         val charsToDelete = currentLength - service.voiceRecognitionHandler.textLengthBeforeVoiceInput
         
         if (charsToDelete > 0) {
             for (i in 0 until charsToDelete) {
-                service.currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
-                service.currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
+                service.editingInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
+                service.editingInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
             }
         }
         
@@ -46,8 +46,8 @@ internal class ImeTextCommit(private val service: XimeInputMethodService) {
     }
     
     internal fun performSearch() {
-        service.currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-        service.currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+        service.editingInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+        service.editingInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
     }
 
     internal fun commitImage(imagePath: String, mimeType: String = "image/jpeg"): Boolean {
@@ -193,8 +193,7 @@ internal class ImeTextCommit(private val service: XimeInputMethodService) {
     }
 
     internal fun deleteClipboardChars(count: Int) {
-        service.noteSelfWriteCaretDelta(-count)
-        service.currentInputConnection?.deleteSurroundingText(count, 0)
+        service.deleteBeforeCursor(count)
     }
 
     /** 生成图片 content URI（commitContent 用）：FileProvider 优先，抛错时降级 [MediaBridge] 中转（不写相册）。 */

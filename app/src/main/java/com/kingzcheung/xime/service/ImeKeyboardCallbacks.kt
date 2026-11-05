@@ -254,6 +254,14 @@ internal fun rememberImeKeyboardCallbacks(
                 service.uiState.value = service.uiState.value.copy(toolbarButtons = buttons)
             },
             onOpenToolPanel = { pluginId -> service.openToolPanel(pluginId) },
+            onPromptToggleExpanded = {
+                service.uiState.value = service.uiState.value.copy(promptExpanded = !service.uiState.value.promptExpanded)
+            },
+            onPromptOpen = { service.promptEditor.open() },
+            onPromptClose = { service.promptEditor.requestClose() },
+            onPromptSubmit = { send -> service.promptEditor.submit(send) },
+            onPromptAttach = { service.promptEditor.attach(it) },
+            onPromptClear = { service.promptEditor.clear() },
             onToolPanelClose = { service.closeToolPanel() },
             onToolPanelItemClick = { item -> service.commitToolPanelItem(item.text) },
             onToolPanelAction = { actionId -> service.dispatchToolPanelAction(actionId) },
@@ -417,6 +425,7 @@ internal fun rememberImeKeyboardCallbacks(
                 }
             },
             onShowQuickSendForm = {
+                service.promptEditor.close()
                 service.closeToolPanel()
                 // 从 Overlay 页面（剪贴板面板）打开表单时必须退出 Overlay：
                 // Overlay 渲染为全屏 clickable Box（吞点击），若不退出，表单会被
@@ -437,6 +446,7 @@ internal fun rememberImeKeyboardCallbacks(
                 // updateHeight 改容器物理高度 → relayout → onComputeInsets 自动重算。
             },
             onQuickSendEditItem = { id, text, code ->
+                service.promptEditor.close()
                 // 同 onShowQuickSendForm：编辑入口在剪贴板面板内，先退出 Overlay 防表单被盖
                 service.keyboardViewModel.closeOverlay()
                 service.uiState.value = service.uiState.value.copy(

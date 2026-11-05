@@ -1,0 +1,10 @@
+<resources>
+    <string name="prompt_hint">Edit your Prompt here. Enter adds a new line.</string>
+    <string name="prompt_collapse">Collapse</string>
+    <string name="prompt_clear">Clear</string>
+    <string name="prompt_insert">Insert</string>
+    <string name="prompt_submit_failed">Could not insert into the current field. Draft retained.</string>
+    <string name="prompt_send_unavailable">Text inserted. Tap Send in the app.</string>
+    <string name="prompt_expand">Expand</string>
+    <string name="prompt_shrink">Shrink</string>
+</resources>

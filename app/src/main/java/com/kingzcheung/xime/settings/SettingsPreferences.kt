@@ -109,8 +109,16 @@ object SettingsPreferences {
     private val DEFAULT_TOOLBAR_BUTTONS = com.kingzcheung.xime.keyboard.ToolbarButton.DEFAULT_VISIBLE.joinToString(",") { it.id }
 
     fun getToolbarButtons(context: Context): List<String> {
-        val raw = getPrefs(context).getString(KEY_TOOLBAR_BUTTONS, DEFAULT_TOOLBAR_BUTTONS) ?: DEFAULT_TOOLBAR_BUTTONS
-        return raw.split(",").filter { it.isNotEmpty() }
+        val prefs = getPrefs(context)
+        val raw = prefs.getString(KEY_TOOLBAR_BUTTONS, DEFAULT_TOOLBAR_BUTTONS) ?: DEFAULT_TOOLBAR_BUTTONS
+        val buttons = raw.split(",").filter { it.isNotEmpty() }
+        if (!prefs.getBoolean("prompt_toolbar_added", false)) {
+            val updated = (buttons + "prompt").distinct()
+            prefs.edit().putString(KEY_TOOLBAR_BUTTONS, updated.joinToString(","))
+                .putBoolean("prompt_toolbar_added", true).apply()
+            return updated
+        }
+        return buttons
     }
 
     fun setToolbarButtons(context: Context, buttons: List<String>) {

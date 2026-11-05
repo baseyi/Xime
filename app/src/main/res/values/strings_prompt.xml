@@ -1,0 +1,10 @@
+<resources>
+    <string name="prompt_hint">在这里编辑 Prompt，回车换行</string>
+    <string name="prompt_collapse">收起</string>
+    <string name="prompt_clear">清空</string>
+    <string name="prompt_insert">填入输入框</string>
+    <string name="prompt_submit_failed">未能填入当前输入框，草稿已保留</string>
+    <string name="prompt_send_unavailable">全文已填入，请在应用中点击发送</string>
+    <string name="prompt_expand">向上展开</string>
+    <string name="prompt_shrink">缩小</string>
+</resources>
