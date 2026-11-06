@@ -72,6 +72,8 @@ data class KeyboardUiState(
     val voiceBottomActive: Boolean = false,
     val voiceLeftActive: Boolean = false,
     val voiceRightActive: Boolean = false,
+    val voiceHoldActive: Boolean = false,
+    val voiceHeld: Boolean = false,
     val voicePluginName: String = "",
     val voiceRecognitionState: RecognitionState = RecognitionState.IDLE,
     val voiceRecognizedText: String = "",

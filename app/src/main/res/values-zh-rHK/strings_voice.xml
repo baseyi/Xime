@@ -1,0 +1,7 @@
+<resources>
+    <string name="voice_hold">保持</string>
+    <string name="voice_hold_stop">結束</string>
+    <string name="voice_hold_hint">鬆開結束 · 滑至保持可繼續</string>
+    <string name="voice_release_to_hold">鬆開保持識別</string>
+    <string name="voice_held_hint">已保持 · 點擊結束按鈕停止</string>
+</resources>

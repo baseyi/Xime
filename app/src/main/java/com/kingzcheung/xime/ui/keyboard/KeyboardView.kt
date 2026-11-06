@@ -409,6 +409,9 @@ fun KeyboardView(
 
             if (state.promptVisible) {
                 PromptEditorPanel(
+                    backgroundStyle = Modifier.keyboardBackground(themeScheme.keyboardBackground, state.isDarkTheme, keyboardBgColor),
+                    backgroundColor = keyboardBgColor,
+                    textColor = keyTextColor,
                     canSend = state.promptCanSend,
                     expanded = state.promptExpanded,
                     floating = state.promptFloating,
@@ -1204,6 +1207,12 @@ fun KeyboardView(
                             bottomActive = state.voiceBottomActive,
                             leftActive = state.voiceLeftActive,
                             rightActive = state.voiceRightActive,
+                            holdActive = state.voiceHoldActive,
+                            held = state.voiceHeld,
+                            onHoldStop = { callbacks.onVoiceHoldStop?.invoke() },
+                            onHeldUndo = { callbacks.onVoiceHoldUndo?.invoke() },
+                            onHeldSend = { callbacks.onVoiceHoldSend?.invoke() },
+                            onHoldBoundsChanged = callbacks.onVoiceHoldBoundsChanged,
                             pluginName = state.voicePluginName,
                             recognitionState = state.voiceRecognitionState,
                             recognizedText = state.voiceRecognizedText,

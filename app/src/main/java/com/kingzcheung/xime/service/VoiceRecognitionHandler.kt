@@ -135,6 +135,7 @@ class VoiceRecognitionHandler(
             onStateChanged(getState().copy(
                 isVoiceMode = false,
                 voiceSticky = false,
+                voiceButtonState = VoiceButtonState(),
                 voiceRecognitionState = RecognitionState.ERROR
             ))
             return

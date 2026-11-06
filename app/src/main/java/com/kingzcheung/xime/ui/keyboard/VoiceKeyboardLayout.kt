@@ -8,6 +8,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,12 +23,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +46,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +70,12 @@ fun VoiceKeyboardLayout(
     bottomActive: Boolean = false,
     leftActive: Boolean = false,
     rightActive: Boolean = false,
+    holdActive: Boolean = false,
+    held: Boolean = false,
+    onHoldStop: () -> Unit = {},
+    onHeldUndo: () -> Unit = {},
+    onHeldSend: () -> Unit = {},
+    onHoldBoundsChanged: ((Rect?) -> Unit)? = null,
     pluginName: String = "",
     recognitionState: RecognitionState = RecognitionState.IDLE,
     recognizedText: String = "",
@@ -68,6 +85,10 @@ fun VoiceKeyboardLayout(
     val accentColor = KeyboardThemes.getAccentColor(themeId, isDarkTheme)
     val inactiveColor = if (isDarkTheme) Color.Gray.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.9f)
     val activeColor = accentColor
+    val currentOnHoldBoundsChanged by rememberUpdatedState(onHoldBoundsChanged)
+    DisposableEffect(Unit) {
+        onDispose { currentOnHoldBoundsChanged?.invoke(null) }
+    }
     
     Column(
         modifier = modifier
@@ -131,11 +152,14 @@ fun VoiceKeyboardLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .clickable(enabled = held, role = Role.Button, onClick = onHeldUndo),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(
@@ -153,6 +177,26 @@ fun VoiceKeyboardLayout(
                     modifier = Modifier
                         .size(28.dp)
                         .scale(if (leftActive) 1.15f else 1f)
+                )
+            }
+
+            FilledTonalIconButton(
+                onClick = onHoldStop,
+                enabled = held,
+                modifier = Modifier
+                    .size(56.dp)
+                    .onGloballyPositioned { currentOnHoldBoundsChanged?.invoke(it.boundsInWindow()) },
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = activeColor,
+                    contentColor = Color.White,
+                    disabledContainerColor = if (holdActive) activeColor else inactiveColor,
+                    disabledContentColor = if (holdActive) Color.White else keyTextColor
+                )
+            ) {
+                Icon(
+                    imageVector = if (held) Icons.Default.Stop else Icons.Default.Lock,
+                    contentDescription = tr(if (held) R.string.voice_hold_stop else R.string.voice_hold),
+                    modifier = Modifier.size(28.dp)
                 )
             }
             
@@ -184,7 +228,10 @@ fun VoiceKeyboardLayout(
             }
             
             Box(
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .clickable(enabled = held, role = Role.Button, onClick = onHeldSend),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(
@@ -252,7 +299,11 @@ fun VoiceKeyboardLayout(
             }
             
             Text(
-                text = tr(R.string.s_songkaijieshu),
+                text = tr(when {
+                    held -> R.string.voice_held_hint
+                    holdActive -> R.string.voice_release_to_hold
+                    else -> R.string.voice_hold_hint
+                }),
                 color = if (bottomActive) Color.DarkGray else Color.Gray,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,

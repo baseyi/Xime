@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.draw.alpha
@@ -56,6 +57,9 @@ fun PromptEditorPanel(
     onToggleFloating: () -> Unit = {},
     expanded: Boolean = false,
     onToggleExpanded: () -> Unit = {},
+    backgroundStyle: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -95,6 +99,7 @@ fun PromptEditorPanel(
     val currentContent by rememberUpdatedState<@Composable (Boolean) -> Unit>({ isFloating ->
         PromptEditorBody(
             canSend, onClose, onSubmit, onAttach, onClear, onCopy, expanded,
+            backgroundStyle, backgroundColor, textColor,
             {
                 if (isFloating) {
                     floatingHeight = promptPanelHeightDp(configuration.screenHeightDp, !expanded).toFloat()
@@ -226,6 +231,9 @@ private fun PromptEditorBody(
     onClear: () -> Unit,
     onCopy: () -> Unit,
     expanded: Boolean,
+    backgroundStyle: Modifier,
+    backgroundColor: Color,
+    textColor: Color,
     onToggleExpanded: () -> Unit,
     floating: Boolean,
     onToggleFloating: () -> Unit,
@@ -233,16 +241,17 @@ private fun PromptEditorBody(
     dragModifier: Modifier,
 ) {
     val height = promptPanelHeightDp(LocalConfiguration.current.screenHeightDp, expanded)
-    val textColor = MaterialTheme.colorScheme.onSurface
     val attach by rememberUpdatedState(onAttach)
     DisposableEffect(Unit) { onDispose { attach(null) } }
     Surface(
-        tonalElevation = 2.dp,
+        color = if (floating) backgroundColor else Color.Transparent,
+        contentColor = textColor,
+        tonalElevation = 0.dp,
         shape = if (floating) MaterialTheme.shapes.large else RectangleShape,
         border = if (floating) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null,
         modifier = if (floating) Modifier.fillMaxSize().padding(top = 5.dp) else Modifier.fillMaxWidth().height(height.dp),
     ) {
-        Column(Modifier.padding(horizontal = 12.dp)) {
+        Column(Modifier.then(if (floating) backgroundStyle else Modifier).padding(horizontal = 12.dp)) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Prompt", style = MaterialTheme.typography.titleMedium, modifier = Modifier.then(dragModifier).padding(top = 12.dp))
                 TextButton(onClick = onToggleFloating) { Text(if (floating) "停靠" else "悬浮") }
@@ -267,7 +276,10 @@ private fun PromptEditorBody(
                         attach(this)
                     }
                 },
-                update = { it.setTextColor(textColor.toArgb()) },
+                update = {
+                    it.setTextColor(textColor.toArgb())
+                    it.setHintTextColor(textColor.copy(alpha = 0.6f).toArgb())
+                },
                 modifier = Modifier.fillMaxWidth().weight(1f),
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

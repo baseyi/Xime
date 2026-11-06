@@ -1748,6 +1748,8 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                     voiceBottomActive = state.voiceButtonState.bottomActive,
                                     voiceLeftActive = state.voiceButtonState.leftActive,
                                     voiceRightActive = state.voiceButtonState.rightActive,
+                                    voiceHoldActive = state.voiceButtonState.holdActive,
+                                    voiceHeld = state.voiceButtonState.held,
                                     voicePluginName = state.voicePluginName,
                                     voiceRecognitionState = state.voiceRecognitionState,
                                     voiceRecognizedText = state.voiceRecognizedText,

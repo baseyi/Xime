@@ -198,6 +198,7 @@ internal fun rememberImeKeyboardCallbacks(
             },
             onVoiceModeChange = { enabled ->
                 if (!enabled) {
+                    if (service.uiState.value.voiceButtonState.held) return@KeyboardCallbacks
                     // 长按抬手/常驻语音轻触空格或点按候选栏频谱：结束语音会话
                     // （提交当前已识别文本并停止识别）。
                     // 常驻语音下补一次震动反馈——轻触空格没有任何按键事件，
@@ -224,6 +225,17 @@ internal fun rememberImeKeyboardCallbacks(
                     service.voiceRecognitionHandler.startRecognition()
                 }
             },
+            onVoiceHoldStop = {
+                if (service.uiState.value.voiceButtonState.held) {
+                    service.feedbackManager.performVibration()
+                    service.endVoiceSession()
+                }
+            },
+            onVoiceHoldBoundsChanged = { bounds ->
+                service.keyboardContainer.voiceHoldBounds = bounds
+            },
+            onVoiceHoldUndo = { service.keyboardContainer.performHeldVoiceAction(send = false) },
+            onVoiceHoldSend = { service.keyboardContainer.performHeldVoiceAction(send = true) },
             onVoiceStickyToggle = {
                 val state = service.uiState.value
                 if (state.isVoiceMode && state.voiceSticky) {
